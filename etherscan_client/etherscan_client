@@ -1,0 +1,62 @@
+#!/usr/bin/env python3
+import argparse
+import pprint
+import sys
+import requests
+
+
+class EthereumConnectionException(Exception):
+    pass
+
+
+class Client():
+    _url = "http://{}/api/{}/{}"
+
+    def __init__(self):
+        self.pp = pprint.PrettyPrinter(indent=1, compact=True)
+
+    def get(self):
+        response = requests.get(self._prepare_url(self.action,
+                                                  self.target)).json()
+        if response["status"] != "Success":
+            raise EthereumConnectionException(response["message"])
+        self.pp.pprint(response["result"])
+
+    def _prepare_url(self, action, target):
+        return self._url.format(self.server, action, target)
+
+
+def main():
+    client = Client()
+
+    parser = argparse.ArgumentParser(description="Query ethereum server")
+
+    parser.add_argument("action",
+                        help="an action to trigger")
+
+    parser.add_argument("target",
+                        help="specified account/block")
+
+    parser.add_argument("--server", default="localhost:8080",
+                        help="endpoint of ethereum server")
+
+    parser.parse_args(namespace=client)
+
+    if client.action not in ['balance', "block"]:
+        print("Wrong action. Possible actions are: balance and block")
+        sys.exit(1)
+    elif client.action == "balance":
+        try:
+            client.get()
+        except Exception as e:
+            print(e)
+            sys.exit(1)
+    elif client.action == "block":
+        try:
+            client.get()
+        except Exception as e:
+            print(e)
+            sys.exit(1)
+
+if __name__ == '__main__':
+    main()
